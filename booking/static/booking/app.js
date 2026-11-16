@@ -5,7 +5,7 @@ const dialog = document.querySelector("#dialog");
 const dialogForm = document.querySelector("#dialog-form");
 const dialogError = document.querySelector("#dialog-error");
 const submit = document.querySelector("#dialog-submit");
-const state = { role: null, page: "directory", specialty: "", doctor: null, date: today(), directory: null };
+const state = { role: null, page: "directory", specialty: "", search: "", doctor: null, date: today(), directory: null };
 let renderVersion = 0;
 let availabilityVersion = 0;
 let dialogAction;
@@ -51,7 +51,7 @@ function announce(message, error = false) {
 }
 
 function hero(title, description) {
-  return `<section class="hero"><h1>${title}</h1><p>${description}</p></section>`;
+  return `<section class="hero"><h1>${title}</h1><p>${description}</p><div class="hero-highlights"><span>✦ Simple scheduling</span><span>✓ Secure bookings</span><span>♡ Patient-first care</span></div></section>`;
 }
 
 function renderNav() {
@@ -96,6 +96,7 @@ async function render() {
 
 function renderDirectory() {
   const { specialties, doctors } = state.directory;
+  const visibleDoctors = doctors.filter(doctor => `${doctor.name} ${doctor.specialty.name} ${doctor.bio}`.toLowerCase().includes(state.search.toLowerCase()));
   content.innerHTML = hero("Find a doctor", "Browse by specialty and choose a time for your consultation.") + `
     <div class="layout">
       <section class="stack" aria-labelledby="directory-title">
@@ -107,7 +108,9 @@ function renderDirectory() {
             </select></label>
           </div>
         </div>
-        ${doctors.map(doctor => `
+        <label>Search doctors<input id="doctor-search" class="search-input" type="search" placeholder="Search by name, specialty or care…" value="${escapeHtml(state.search)}" autocomplete="off"></label>
+        <p class="meta" id="doctor-count">${visibleDoctors.length} ${visibleDoctors.length === 1 ? "doctor" : "doctors"} found</p>
+        ${visibleDoctors.map(doctor => `
           <article class="card">
             <div class="row spread">
               <div class="profile">
@@ -121,12 +124,13 @@ function renderDirectory() {
               <strong>${Number(doctor.fee).toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 })}</strong>
               <button data-doctor="${doctor.id}" aria-pressed="${state.doctor === doctor.id}">View times</button>
             </div>
-          </article>`).join("") || '<p class="card muted">No doctors in this specialty.</p>'}
+          </article>`).join("") || '<p class="empty-state">No matching doctors. Try another search or specialty.</p>'}
       </section>
       <section id="calendar" class="panel" aria-labelledby="calendar-title">
         <h2 id="calendar-title">Available appointments</h2>
         <p class="muted" id="selected-doctor"></p>
         <label>Appointment date <input id="date" type="date" min="${today()}" value="${escapeHtml(state.date)}"></label>
+        <div class="quick-dates" aria-label="Quick appointment dates"><button data-date-offset="0">Today</button><button data-date-offset="1">Tomorrow</button><button data-date-offset="2">In 2 days</button></div>
         <div id="availability" aria-live="polite"></div>
         <small class="muted">All times are in IST.</small>
       </section>
@@ -148,7 +152,7 @@ async function refreshAvailability() {
     const slots = await api("availability/?" + new URLSearchParams({ doctor: doctor.id, date: state.date }));
     if (version !== availabilityVersion) return;
     target.innerHTML = slots.length ? `<div class="row">${slots.map(slot =>
-      `<button data-book="${slot.id}" data-time="${slot.start_time.slice(0, 5)}">${slot.start_time.slice(0, 5)}–${slot.end_time.slice(0, 5)}</button>`).join("")}</div>`
+      `<button class="slot-pill" data-book="${slot.id}" data-time="${slot.start_time.slice(0, 5)}">${slot.start_time.slice(0, 5)}–${slot.end_time.slice(0, 5)}</button>`).join("")}</div>`
       : '<p class="muted">No available times on this date.</p>';
   } catch (error) {
     if (version === availabilityVersion) target.textContent = error.message;
@@ -237,16 +241,35 @@ document.addEventListener("change", event => {
     state.specialty = event.target.value;
     render();
   }
+  if (event.target.id === "doctor-search") { state.search = event.target.value; renderDirectory(); }
   if (event.target.id === "date") {
     state.date = event.target.value;
     refreshAvailability();
   }
 });
 
+document.addEventListener("input", event => {
+  if (event.target.id !== "doctor-search") return;
+  const cursor = event.target.selectionStart;
+  state.search = event.target.value;
+  renderDirectory();
+  const input = document.querySelector("#doctor-search");
+  input.focus();
+  input.setSelectionRange(cursor, cursor);
+});
+
 document.addEventListener("click", async event => {
   const button = event.target.closest("button");
   if (!button || dialog.contains(button)) return;
   const { page, action, doctor, book, time, cancel, complete, edit, remove } = button.dataset;
+  if (button.dataset.dateOffset !== undefined) {
+    const day = new Date(`${today()}T12:00:00Z`);
+    day.setUTCDate(day.getUTCDate() + Number(button.dataset.dateOffset));
+    state.date = day.toISOString().slice(0, 10);
+    document.querySelector("#date").value = state.date;
+    refreshAvailability();
+    return;
+  }
   announce("");
   try {
     if (page) {
@@ -330,3 +353,22 @@ api("session/").then(session => {
   content.setAttribute("aria-busy", "false");
   announce(error.message, true);
 });
+
+
+// Theme preference stays on this browser; defaults to the system appearance.
+(function initTheme() {
+  const toggle = document.querySelector("#theme-toggle");
+  const preferred = (() => { try { return localStorage.getItem("clearway-theme"); } catch { return null; } })();
+  function apply(theme) {
+    document.documentElement.dataset.theme = theme;
+    toggle.innerHTML = theme === "dark" ? "☀ <span>Light</span>" : "☾ <span>Dark</span>";
+    toggle.setAttribute("aria-label", "Switch to " + (theme === "dark" ? "light" : "dark") + " mode");
+    toggle.setAttribute("aria-pressed", String(theme === "dark"));
+  }
+  apply(preferred === "dark" || preferred === "light" ? preferred : (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
+  toggle.addEventListener("click", () => {
+    const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    apply(next);
+    try { localStorage.setItem("clearway-theme", next); } catch { /* private mode */ }
+  });
+})();
