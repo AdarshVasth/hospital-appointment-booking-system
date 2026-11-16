@@ -64,3 +64,47 @@ dialog h2 { padding-block: 6px; }
   nav { justify-content: flex-start; }
   .panel, .card { padding: 16px; }
 }
+
+/* Clearway experience refresh — light and dark design tokens */
+:root { color-scheme:light; --surface:#fff; --canvas:#f4f8f8; --surface-2:#edf7f4; --ink:#142e31; --muted:#4e6767; --teal:#006552; --border:#d8e5e0; --shadow:0 16px 42px rgba(14,67,63,.065); }
+html { scroll-behavior:smooth; }
+body { background:var(--canvas); color:var(--ink); transition:background .22s,color .22s; }
+.topbar { position:sticky; top:0; z-index:10; background:var(--surface); backdrop-filter:blur(16px); }
+.header-actions { display:flex; align-items:center; justify-content:flex-end; gap:14px; flex-wrap:wrap; }
+.theme-toggle { white-space:nowrap; display:inline-flex; align-items:center; gap:8px; border-radius:99px; }
+main { position:relative; }
+.ambient-glow { pointer-events:none; position:absolute; inset:0 0 auto; height:260px; z-index:-1; background:radial-gradient(ellipse at 80% 0%,rgba(30,181,143,.13),transparent 62%); }
+.hero { position:relative; overflow:hidden; box-shadow:0 24px 60px rgba(0,81,69,.17); background:linear-gradient(115deg,#102f39 0%,#006b56 66%,#0b9b7e 100%); }
+.hero::after { content:"✚"; position:absolute; right:5%; top:-60px; font-size:260px; line-height:1; font-weight:800; color:rgba(255,255,255,.08); transform:rotate(-14deg); pointer-events:none; }
+.hero h1,.hero p { position:relative; z-index:1; }
+.hero::before { content:"● CARE THAT CONNECTS"; display:block; letter-spacing:.15em; font-size:.73rem; font-weight:800; margin-bottom:18px; color:#b8f5e1; }
+.panel,.card,dialog { background:var(--surface); box-shadow:var(--shadow); transition:background .22s,border-color .22s,transform .2s,box-shadow .2s; }
+.card:hover { transform:translateY(-3px); box-shadow:0 20px 48px rgba(0,75,65,.11); }
+button,.button { transition:background .18s,transform .18s,border-color .18s; }
+button:active,.button:active { transform:scale(.97); }
+input,select,textarea { background:var(--surface); color:var(--ink); }
+.search-input { max-width:330px; }
+.directory-tools { display:flex; flex-wrap:wrap; gap:12px; align-items:end; }
+.directory-tools label { flex:1; min-width:190px; }
+.quick-dates { display:flex; flex-wrap:wrap; gap:7px; }
+.quick-dates button { font-size:.83rem; min-height:36px; padding:7px 10px; }
+.slot-pill { border-radius:99px; background:var(--surface-2); border-color:var(--border); }
+.empty-state { padding:24px; border:1px dashed var(--border); border-radius:14px; text-align:center; color:var(--muted); }
+.hero-highlights { display:flex; gap:10px; flex-wrap:wrap; margin-top:23px; }
+.hero-highlights span { border:1px solid rgba(255,255,255,.24); border-radius:99px; background:rgba(255,255,255,.11); padding:7px 12px; font-size:.83rem; font-weight:700; }
+#calendar { position:sticky; top:104px; }
+:root[data-theme="dark"] { color-scheme:dark; --surface:#14262c; --canvas:#0b171d; --surface-2:#1b383b; --ink:#eaf7f4; --muted:#aac3c2; --teal:#63ddbd; --border:#315057; --shadow:0 16px 45px rgba(0,0,0,.17); }
+[data-theme="dark"] .topbar { background:#14262cf2; }
+[data-theme="dark"] .hero { background:linear-gradient(115deg,#14333e,#075c56 68%,#137b74); }
+[data-theme="dark"] .mark,[data-theme="dark"] button.primary,[data-theme="dark"] .button.primary { background:#0b7e69; border-color:#0b7e69; color:white; }
+[data-theme="dark"] button,[data-theme="dark"] .button { background:#1b3439; color:#c7f7e9; border-color:#315057; }
+[data-theme="dark"] button:hover,[data-theme="dark"] .button:hover { background:#27524f; }
+[data-theme="dark"] .specialty,[data-theme="dark"] .status,[data-theme="dark"] .avatar { background:#204a43; color:#b0f8dd; }
+[data-theme="dark"] .status.cancelled { background:#4b2930; color:#ffd1d1; }
+[data-theme="dark"] .status.completed { background:#303c61; color:#d3deff; }
+[data-theme="dark"] button[aria-current="page"],[data-theme="dark"] button[aria-pressed="true"] { background:#285d53; border-color:#54bba3; }
+[data-theme="dark"] .notice { background:#1d4d40; color:#d2ffe8; }
+[data-theme="dark"] .error { background:#4b2930; color:#ffd4d4; }
+[data-theme="dark"] input,[data-theme="dark"] select,[data-theme="dark"] textarea { border-color:#45636a; }
+@media(max-width:740px) { .header-actions { width:100%; justify-content:space-between; } #calendar { position:static; } .hero::after { right:-50px; font-size:180px; } .search-input { max-width:none; } }
+@media(prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto!important; transition:none!important; animation:none!important; } }
