@@ -1,0 +1,31 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clearway Hospital | Appointments</title>
+  <link rel="stylesheet" href="{% static 'booking/style.css' %}">
+  <script src="{% static 'booking/app.js' %}" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="frame topbar-inner">
+      <a class="brand" href="/" aria-label="Clearway Hospital home"><span class="mark" aria-hidden="true">+</span> Clearway Hospital</a>
+      <nav id="nav" aria-label="Main navigation"></nav>
+    </div>
+  </header>
+  <main class="frame">
+    <p id="notice" class="notice" role="status" aria-live="polite" hidden></p>
+    <div id="content" aria-busy="true"><p>Loading appointments…</p></div>
+  </main>
+  <dialog id="dialog" aria-labelledby="dialog-title">
+    <form id="dialog-form">
+      <div class="dialog-heading"><h2 id="dialog-title"></h2><button id="dismiss" type="button" class="quiet" aria-label="Close">×</button></div>
+      <div id="dialog-fields"></div>
+      <p id="dialog-error" class="error" role="alert" hidden></p>
+      <button id="dialog-submit" class="primary" type="submit"></button>
+    </form>
+  </dialog>
+</body>
+</html>

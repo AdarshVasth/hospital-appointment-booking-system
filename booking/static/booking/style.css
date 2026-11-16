@@ -1,0 +1,66 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;600;700;800&display=swap');
+:root {
+  font-family: "DM Sans", system-ui, sans-serif;
+  color: #142e31;
+  background: #f6f9f8;
+  --ink: #142e31;
+  --muted: #4e6767;
+  --teal: #006552;
+  --border: #d8e5e0;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+.frame { width: min(1120px, calc(100% - 48px)); margin-inline: auto; }
+.topbar { background: #fff; border-bottom: 1px solid var(--border); }
+.topbar-inner, nav, .row, .dialog-heading { display: flex; align-items: center; gap: 12px; }
+.topbar-inner { min-height: 72px; justify-content: space-between; padding-block: 10px; }
+nav, .row { flex-wrap: wrap; }
+nav { justify-content: flex-end; }
+.brand { flex-shrink: 0; display: inline-flex; align-items: center; gap: 10px; color: var(--ink); font-weight: 800; text-decoration: none; }
+.mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 11px; background: var(--teal); color: white; font-size: 26px; line-height: 1; }
+main { padding-block: 32px 72px; }
+.hero { background: linear-gradient(115deg, #143e3e, #00634e); color: #fff; border-radius: 24px; padding: clamp(26px, 6vw, 62px); margin-bottom: 30px; }
+.hero p { color: #def2eb; max-width: 44ch; margin-bottom: 0; font-size: 1.05rem; }
+h1, h2, h3 { font-family: Manrope, system-ui, sans-serif; margin: 0; line-height: 1.18; }
+h1 { font-size: clamp(2rem, 5vw, 3.8rem); letter-spacing: -.045em; }
+h2 { font-size: 1.35rem; letter-spacing: -.02em; }
+h3 { font-size: 1.1rem; }
+p { line-height: 1.5; }
+.muted, .meta { color: var(--muted); }
+.notice { background: #e3f4ec; color: #145342; padding: 12px 16px; border-radius: 10px; margin-top: 0; }
+.error { color: #952d32; background: #fff0f0; padding: 10px 12px; border-radius: 8px; }
+.layout { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+.panel, .card, dialog { background: white; border: 1px solid var(--border); border-radius: 17px; padding: 22px; }
+.panel, .stack { display: grid; gap: 14px; }
+.panel + .panel { margin-top: 18px; }
+.card > p:last-child, .panel > p:last-child { margin-bottom: 0; }
+.spread, .dialog-heading { justify-content: space-between; }
+.specialty, .status { display: inline-block; padding: 5px 10px; background: #e6f3ef; color: #075846; border-radius: 30px; font-size: .84rem; font-weight: 700; }
+.status.cancelled { background: #f8eaeb; color: #8b3138; }
+.status.completed { background: #edf0fb; color: #374a84; }
+.profile { display: flex; gap: 13px; align-items: center; }
+.avatar { width: 44px; height: 44px; flex: 0 0 44px; border-radius: 14px; background: #dff1ea; display: grid; place-items: center; color: var(--teal); font-weight: 800; }
+button, input, select, textarea { font: inherit; }
+button, .button { border: 1px solid var(--border); color: var(--teal); background: white; min-height: 41px; padding: 8px 13px; border-radius: 9px; font-weight: 700; cursor: pointer; text-decoration: none; }
+button:hover, .button:hover { background: #eaf5f0; }
+button.primary, .button.primary { background: var(--teal); color: white; border-color: var(--teal); }
+button.primary:hover, .button.primary:hover { background: #004f40; }
+button.quiet { border-color: transparent; }
+button:disabled { cursor: wait; opacity: .65; }
+button[aria-current="page"], button[aria-pressed="true"] { background: #dff1ea; border-color: #8cc6b5; }
+:focus-visible { outline: 3px solid #4b99cd; outline-offset: 3px; }
+label { display: grid; gap: 6px; font-weight: 700; }
+input, select, textarea { min-width: 0; width: 100%; padding: 9px 11px; border: 1px solid #a9beb8; border-radius: 8px; background: white; color: var(--ink); }
+textarea { min-height: 90px; resize: vertical; }
+hr { width: 100%; border: none; border-top: 1px solid var(--border); margin-block: 6px; }
+dialog { width: min(465px, calc(100% - 32px)); color: var(--ink); }
+dialog::backdrop { background: #102d31a0; }
+dialog form, #dialog-fields { display: grid; gap: 14px; }
+dialog h2 { padding-block: 6px; }
+@media (max-width: 740px) {
+  .layout { grid-template-columns: 1fr; }
+  .frame { width: calc(100% - 28px); }
+  .topbar-inner { flex-wrap: wrap; }
+  nav { justify-content: flex-start; }
+  .panel, .card { padding: 16px; }
+}
