@@ -186,7 +186,7 @@ function renderSlots(slots) {
       ${slots.map(slot => `
         <article class="card row spread">
           <div><h3>${dateLabel(slot.date)}</h3><p class="meta">${slot.start_time.slice(0, 5)}–${slot.end_time.slice(0, 5)} IST</p></div>
-          ${slot.has_history ? '<span class="specialty">Appointment history</span>' : `
+          ${slot.reserved ? '<span class="specialty">Reserved</span>' : `
             <div class="row"><button data-edit="${slot.id}" data-date="${slot.date}" data-start="${slot.start_time.slice(0, 5)}" data-end="${slot.end_time.slice(0, 5)}">Edit</button>
             <button data-remove="${slot.id}">Delete</button></div>`}
         </article>`).join("") || '<p class="muted">You haven’t added any slots yet.</p>'}

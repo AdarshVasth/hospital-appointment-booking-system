@@ -18,14 +18,11 @@ class DoctorSerializer(serializers.ModelSerializer):
 
 
 class SlotSerializer(serializers.ModelSerializer):
-    has_history = serializers.SerializerMethodField()
-
-    def get_has_history(self, slot):
-        return slot.appointments.exists()
+    reserved = serializers.BooleanField(read_only=True, default=False)
 
     class Meta:
         model = Slot
-        fields = ["id", "date", "start_time", "end_time", "has_history"]
+        fields = ["id", "date", "start_time", "end_time", "reserved"]
 
 
 class BookSerializer(serializers.Serializer):

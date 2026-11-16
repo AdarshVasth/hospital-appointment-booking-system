@@ -53,6 +53,34 @@ class WorkflowTests(TestCase):
         self.assertEqual(self.client.post(url).status_code, 409)
         self.assertEqual(self.client.post("/api/appointments/", self.payload, format="json").status_code, 201)
 
+    def test_doctor_can_edit_and_remove_a_cancelled_slot_without_changing_history(self):
+        visit = self.client.post("/api/appointments/", self.payload, format="json").json()["id"]
+        slot_url = f"/api/doctor/slots/{self.slot.pk}/"
+        self.client.force_login(self.doctor.account)
+        self.assertEqual(self.client.delete(slot_url).status_code, 409)
+
+        self.client.force_login(self.patient)
+        self.assertEqual(self.client.post(f"/api/appointments/{visit}/cancel/").status_code, 200)
+        self.assertIn(self.slot.pk, self.available())
+
+        self.client.force_login(self.doctor.account)
+        response = self.client.put(slot_url, {
+            "date": self.slot.date.isoformat(), "start_time": "15:00", "end_time": "15:45",
+        }, format="json")
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.json()["reserved"])
+        self.assertEqual(self.client.delete(slot_url).status_code, 204)
+        self.assertEqual(self.client.get("/api/doctor/slots/").json(), [])
+
+        self.client.force_login(self.patient)
+        self.assertNotIn(self.slot.pk, self.available())
+        self.assertEqual(self.client.post("/api/appointments/", self.payload, format="json").status_code, 404)
+        history = self.client.get("/api/dashboard/").json()["sections"]["past"]
+        self.assertEqual(
+            (history[0]["status"], history[0]["start_time"], history[0]["end_time"]),
+            ("cancelled", "14:00:00", "14:30:00"),
+        )
+
     def test_same_patient_cannot_book_two_doctors_at_the_same_time(self):
         self.assertEqual(self.client.post("/api/appointments/", self.payload, format="json").status_code, 201)
         second = Doctor.objects.create(

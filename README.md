@@ -6,8 +6,8 @@ the API. SQLite stores the local demo data.
 
 ## Run locally
 
-Install Python 3.11 or later, extract the ZIP, and open a terminal inside
-`hospital-appointments`.
+Install Python 3.11 or later, clone this repository, and open a terminal
+in the directory containing `manage.py`.
 
 Windows PowerShell
 
@@ -57,8 +57,9 @@ Doctor record. Public registration creates patient accounts.
 4. Sign in as the doctor to view today's and upcoming appointments, create or
    edit an unreserved slot, and try adding an overlapping slot. Once an
    appointment starts, the doctor can mark it Completed with optional notes.
-   Slots with any appointment history are kept so past records retain their
-   scheduled time. Completed and cancelled visits are final.
+   Booked slots cannot be edited or deleted. After cancellation, the doctor
+   can edit or remove the available slot. Completed and cancelled visits
+   retain their original time and remain final.
 5. Use Django Admin to manage specialties and doctor accounts and inspect
    the slot and appointment records.
 

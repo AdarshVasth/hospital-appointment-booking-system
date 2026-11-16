@@ -44,6 +44,6 @@ class Command(BaseCommand):
                     candidate = Slot(doctor=doctor, date=date, start_time=start, end_time=end)
                     if candidate.starts_at <= timezone.now():
                         continue
-                    if not doctor.slots.filter(date=date, start_time__lt=end, end_time__gt=start).exists():
+                    if not doctor.slots.filter(date=date, start_time__lt=end, end_time__gt=start, withdrawn_at__isnull=True).exists():
                         candidate.save()
         self.stdout.write(self.style.SUCCESS("Demo ready. Sign in as demo_patient or demo_cardio with ClearwayDemo!26"))

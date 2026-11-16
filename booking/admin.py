@@ -29,7 +29,7 @@ class ScheduleAdmin(admin.ModelAdmin):
 
 @admin.register(Slot)
 class SlotAdmin(ScheduleAdmin):
-    list_display = ["doctor", "date", "start_time", "end_time"]
+    list_display = ["doctor", "date", "start_time", "end_time", "withdrawn_at"]
     list_filter = ["doctor", "date"]
 
 

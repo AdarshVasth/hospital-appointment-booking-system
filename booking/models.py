@@ -37,6 +37,7 @@ class Slot(models.Model):
     date = models.DateField()
     start_time = models.TimeField()
     end_time = models.TimeField()
+    withdrawn_at = models.DateTimeField(null=True, blank=True, editable=False)
 
     class Meta:
         ordering = ["date", "start_time", "id"]
@@ -63,6 +64,7 @@ class Appointment(models.Model):
     patient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="appointments")
     date = models.DateField(editable=False)
     start_time = models.TimeField(editable=False)
+    end_time = models.TimeField(editable=False)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.BOOKED)
     reason = models.CharField(max_length=500)
     notes = models.CharField(max_length=500, blank=True)
@@ -79,5 +81,9 @@ class Appointment(models.Model):
             ),
         ]
 
+    @property
+    def starts_at(self):
+        return timezone.make_aware(datetime.combine(self.date, self.start_time))
+
     def __str__(self):
-        return f"{self.patient} · {self.slot} · {self.get_status_display()}"
+        return f"{self.patient} · {self.slot.doctor} · {self.date} · {self.start_time:%H:%M} · {self.get_status_display()}"

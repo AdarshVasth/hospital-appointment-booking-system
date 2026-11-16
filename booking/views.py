@@ -22,6 +22,10 @@ from .serializers import (
 Status = Appointment.Status
 
 
+def reserved_appointments(queryset):
+    return queryset.exclude(status=Status.CANCELLED)
+
+
 def role(user):
     if not user.is_authenticated:
         return None
@@ -106,9 +110,10 @@ def availability(request):
     form = AvailabilitySerializer(data=request.query_params)
     form.is_valid(raise_exception=True)
     now = timezone.localtime()
-    occupied = Appointment.objects.filter(slot=OuterRef("pk")).exclude(status=Status.CANCELLED)
+    occupied = reserved_appointments(Appointment.objects.filter(slot=OuterRef("pk")))
     slots = Slot.objects.filter(
-        doctor_id=form.validated_data["doctor"], date=form.validated_data["date"], doctor__account__is_active=True,
+        doctor_id=form.validated_data["doctor"], date=form.validated_data["date"],
+        doctor__account__is_active=True, withdrawn_at__isnull=True,
     ).filter(
         Q(date__gt=now.date()) | Q(date=now.date(), start_time__gt=now.time()),
     ).filter(~Exists(occupied))
@@ -118,9 +123,10 @@ def availability(request):
 @api_view(["GET", "POST"])
 @require_role("doctor")
 def doctor_slots(request):
-    slots = request.user.doctor.slots
+    slots = request.user.doctor.slots.filter(withdrawn_at__isnull=True)
     if request.method == "GET":
-        return Response(SlotSerializer(slots.all(), many=True).data)
+        reservations = reserved_appointments(Appointment.objects.filter(slot=OuterRef("pk")))
+        return Response(SlotSerializer(slots.annotate(reserved=Exists(reservations)), many=True).data)
     return save_slot(request, slots)
 
 
@@ -149,12 +155,16 @@ def save_slot(request, slots, slot=None):
 @require_role("doctor")
 @transaction.atomic
 def doctor_slot(request, pk):
-    slots = request.user.doctor.slots
+    slots = request.user.doctor.slots.filter(withdrawn_at__isnull=True)
     slot = get_object_or_404(slots, pk=pk)
-    if slot.appointments.exists():
-        return Response({"detail": "Slots with an appointment history are kept for the record."}, status=409)
+    if reserved_appointments(slot.appointments.all()).exists():
+        return Response({"detail": "Slots with a booked or completed appointment cannot be changed."}, status=409)
     if request.method == "DELETE":
-        slot.delete()
+        if slot.appointments.exists():
+            slot.withdrawn_at = timezone.now()
+            slot.save(update_fields=["withdrawn_at"])
+        else:
+            slot.delete()
         return Response(status=204)
     return save_slot(request, slots, slot)
 
@@ -167,18 +177,19 @@ def book(request):
     try:
         with transaction.atomic():
             slot = get_object_or_404(Slot.objects.select_related("doctor__account"),
-                                     pk=form.validated_data["slot"], doctor__account__is_active=True)
+                                     pk=form.validated_data["slot"], doctor__account__is_active=True,
+                                     withdrawn_at__isnull=True)
             if slot.starts_at <= timezone.now():
                 return Response({"detail": "This slot has already started."}, status=409)
-            if slot.appointments.exclude(status=Status.CANCELLED).exists():
+            if reserved_appointments(slot.appointments.all()).exists():
                 return Response({"detail": "This slot has already been booked."}, status=409)
-            if request.user.appointments.filter(date=slot.date, start_time=slot.start_time).exclude(
-                status=Status.CANCELLED,
-            ).exists():
+            if reserved_appointments(request.user.appointments.filter(
+                date=slot.date, start_time=slot.start_time,
+            )).exists():
                 return Response({"detail": "You already have an appointment at that time."}, status=409)
             visit = Appointment.objects.create(
                 patient=request.user, slot=slot, date=slot.date, start_time=slot.start_time,
-                reason=form.validated_data["reason"],
+                end_time=slot.end_time, reason=form.validated_data["reason"],
             )
     except IntegrityError:
         return Response({"detail": "The slot or appointment time was already taken."}, status=409)
@@ -192,7 +203,7 @@ def cancel(request, pk):
     visit = get_object_or_404(request.user.appointments.select_related("slot"), pk=pk)
     if visit.status != Status.BOOKED:
         return Response({"detail": "Only booked appointments can be cancelled."}, status=409)
-    if visit.slot.starts_at - timezone.now() < timedelta(hours=2):
+    if visit.starts_at - timezone.now() < timedelta(hours=2):
         return Response({"detail": "Cancellation closes two hours before the appointment."}, status=409)
     visit.status = Status.CANCELLED
     visit.save(update_fields=["status"])
@@ -206,7 +217,7 @@ def complete(request, pk):
     form = CompleteSerializer(data=request.data)
     form.is_valid(raise_exception=True)
     visit = get_object_or_404(Appointment.objects.select_related("slot"), pk=pk, slot__doctor=request.user.doctor)
-    if visit.status != Status.BOOKED or visit.slot.starts_at > timezone.now():
+    if visit.status != Status.BOOKED or visit.starts_at > timezone.now():
         return Response({"detail": "Only booked appointments that have started can be completed."}, status=409)
     visit.status = Status.COMPLETED
     visit.notes = form.validated_data["notes"]
@@ -229,7 +240,7 @@ def dashboard(request):
     sections = {"upcoming": [], "past": []} if user_role == "patient" else {"today": [], "upcoming": [], "past": []}
     completed = 0
     for visit in visits:
-        start = visit.slot.starts_at
+        start = visit.starts_at
         completed += visit.status == Status.COMPLETED
         if user_role == "doctor" and visit.date == now.date():
             section = "today"
@@ -241,7 +252,7 @@ def dashboard(request):
             "id": visit.pk, "doctor": visit.slot.doctor.name, "specialty": visit.slot.doctor.specialty.name,
             "patient": visit.patient.get_full_name() or visit.patient.username,
             "date": visit.date.isoformat(), "start_time": visit.start_time.isoformat(),
-            "end_time": visit.slot.end_time.isoformat(), "status": visit.status,
+            "end_time": visit.end_time.isoformat(), "status": visit.status,
             "reason": visit.reason, "notes": visit.notes,
             "can_cancel": user_role == "patient" and visit.status == Status.BOOKED
             and start - now >= timedelta(hours=2),
