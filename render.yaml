@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: clearway-hospital-booking
+    runtime: python
+    plan: free
+    buildCommand: bash build.sh
+    startCommand: gunicorn hospital.wsgi:application --bind 0.0.0.0:$PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      - key: DJANGO_DEBUG
+        value: "0"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: clearway-hospital-db
+          property: connectionString
+
+databases:
+  - name: clearway-hospital-db
+    plan: free
+    databaseName: clearway_hospital
+    user: clearway_hospital
