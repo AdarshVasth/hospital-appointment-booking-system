@@ -47,6 +47,8 @@ DATABASES = {"default": {
     "TEST": {"NAME": BASE_DIR / "test-db.sqlite3"},
     "OPTIONS": {"transaction_mode": "IMMEDIATE", "timeout": 20},
 }}
+if not DEBUG and not os.environ.get("DATABASE_URL"):
+    raise RuntimeError("DATABASE_URL is required for production. Configure Render PostgreSQL.")
 if os.environ.get("DATABASE_URL"):
     import dj_database_url
     DATABASES["default"] = dj_database_url.config(
